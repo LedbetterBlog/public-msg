@@ -2,9 +2,9 @@ package third
 
 import (
 	"bytes"
-	"consumer/allStruct"
 	"context"
 	"encoding/json"
+	"github.com/LedbetterBlog/public-msg/allStruct"
 	"io"
 	"log"
 	"net/http"
