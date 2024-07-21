@@ -80,3 +80,13 @@ func (r *RedisPoolManager) RemoveFromSet(ctx context.Context, key string, values
 	}
 	return nil
 }
+
+// DeleteValues 从 Redis 中删除指定的多个键
+func (r *RedisPoolManager) DeleteValues(ctx context.Context, keys ...string) error {
+	// 使用 DEL 方法删除指定的多个键
+	_, err := r.client.Del(ctx, keys...).Result()
+	if err != nil {
+		return fmt.Errorf("error deleting keys from redis: %w", err)
+	}
+	return nil
+}
