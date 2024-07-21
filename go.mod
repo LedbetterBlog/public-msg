@@ -1,4 +1,4 @@
-module public-msg
+module github.com/LedbetterBlog/public-msg
 
 go 1.22.5
 
