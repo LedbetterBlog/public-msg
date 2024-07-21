@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"time"
 )
 
 // Config 结构体
@@ -64,6 +65,8 @@ func (c *CustomLogger) Write(p []byte) (n int, err error) {
 }
 
 func GetLog() {
+	// 获取当前日期，并格式化为字符串
+	currentDate := time.Now().Format("2006-01-02")
 	// 设置总日志文件
 	totalLogFile := &lumberjack.Logger{
 		Filename:   "logs/total.log",
@@ -75,7 +78,7 @@ func GetLog() {
 
 	// 设置每日日志文件
 	dailyLogFile := &lumberjack.Logger{
-		Filename:   "logs/daily.log",
+		Filename:   "logs/daily_" + currentDate + ".log",
 		MaxSize:    500,
 		MaxBackups: 3,
 		MaxAge:     1,
