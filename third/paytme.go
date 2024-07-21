@@ -11,31 +11,7 @@ import (
 	"time"
 )
 
-// PayTmePayoutRequest 用于创建支付请求的结构体
-type PayTmePayoutRequest struct {
-	Amount                float64 `json:"amount"`
-	Name                  string  `json:"name"`
-	Email                 string  `json:"email"`
-	Phone                 string  `json:"phone"`
-	AccountNumber         string  `json:"accountNumber"`
-	BankIfsc              string  `json:"bankIfsc"`
-	AccountHolderName     string  `json:"accountHolderName"`
-	BankName              string  `json:"bankName"`
-	UPI                   string  `json:"upi"`
-	Purpose               string  `json:"purpose"`
-	MerchantTransactionID string  `json:"merchantTransactionId"`
-}
-
-// PayTmePayoutResponse 用于解析支付响应的结构体
-type PayTmePayoutResponse struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
-	Data    struct {
-		ID string `json:"_id"`
-	} `json:"data"`
-}
-
-// PayTme 处理支付的结构体
+// PayTme 处理支付的结构体(这个是定义方法，无法放到allStruct)
 type PayTme struct {
 	SecretKey string
 }
@@ -44,7 +20,7 @@ type PayTme struct {
 func (p *PayTme) Payout(ctx context.Context, nowOrder allStruct.PaymentData) (allStruct.PaymentRespData, error) {
 	url := "https://apis.paytme.com/v1/payout"
 
-	payload := PayTmePayoutRequest{
+	payload := allStruct.PayTmePayoutRequest{
 		Amount:                float64(nowOrder.Amount / 100),
 		Name:                  nowOrder.BeneName,
 		Email:                 nowOrder.BeneEmail,
@@ -90,7 +66,7 @@ func (p *PayTme) Payout(ctx context.Context, nowOrder allStruct.PaymentData) (al
 		return allStruct.PaymentRespData{RspMsg: err.Error(), Code: 400}, err
 	}
 
-	var payoutResponse PayTmePayoutResponse
+	var payoutResponse allStruct.PayTmePayoutResponse
 	err = json.Unmarshal(body, &payoutResponse)
 	if err != nil {
 		log.Printf("Error unmarshalling JSON: %v", err)
