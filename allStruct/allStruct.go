@@ -3,7 +3,7 @@ package allStruct
 // CollectOrderStruct 结构体
 type CollectOrderStruct struct {
 	MerchantOrderID string `json:"merchant_order_id"`
-	Amount          int64  `json:"amount"`
+	Amount          int    `json:"amount"`
 	CustomerName    string `json:"customer_name"`
 	CustomerPhone   string `json:"customer_phone"`
 	CustomerEmail   string `json:"customer_email"`
@@ -13,7 +13,7 @@ type CollectOrderStruct struct {
 type PaymentOrderStruct struct {
 	MerchantOrderID string `json:"merchant_order_id"`
 	BenePhone       string `json:"bene_phone"`
-	Amount          int64  `json:"amount"`
+	Amount          int    `json:"amount"`
 	BeneName        string `json:"bene_name"`
 	BeneEmail       string `json:"bene_email"`
 	BeneIFSC        string `json:"bene_ifsc"`
@@ -21,12 +21,20 @@ type PaymentOrderStruct struct {
 	BeneBankAcct    string `json:"bene_bank_acct"`
 }
 
-// PayTmeCallbackData 结构体
-type PayTmeCallbackData struct {
+// PayTmePaymentCallbackData 结构体
+type PayTmePaymentCallbackData struct {
 	Status        string  `json:"status"`
 	TransactionId string  `json:"transaction_id"`
 	Amount        float64 `json:"amount"`
 	Date          string  `json:"date"`
+	Utr           string  `json:"rrn"`
+}
+
+// PayTmeCollectCallbackData 结构体
+type PayTmeCollectCallbackData struct {
+	Status        int     `json:"status"`
+	TransactionId string  `json:"transaction_id"`
+	Amount        float64 `json:"amount"`
 	Utr           string  `json:"rrn"`
 }
 
@@ -42,7 +50,7 @@ type RedisCollectOrderDataStruct struct {
 	MerchantNumber  string `json:"merchant_number"`
 	CreateTime      int64  `json:"create_time"`
 	MerchantOrderID string `json:"merchant_order_id"`
-	Amount          int64  `json:"amount"`
+	Amount          int    `json:"amount"`
 	CustomerName    string `json:"customer_name"`
 	CustomerPhone   string `json:"customer_phone"`
 	CustomerEmail   string `json:"customer_email"`
@@ -50,6 +58,8 @@ type RedisCollectOrderDataStruct struct {
 	Status          int    `json:"status"`
 	PlatformOrderId string `json:"platform_oder_id"`
 	RespMsg         string `json:"resp_msg"`
+	UTR             string `json:"utr"`
+	CallbackStatus  int    `json:"callback_status"`
 }
 
 // PayTmeCollectRespData 定义PayTme代收整体响应结构体
@@ -62,7 +72,7 @@ type PayTmeCollectRespData struct {
 
 // RedisPaymentOrderDataStruct redisOrderDataStruct结构体用于解析 JSON 数据
 type RedisPaymentOrderDataStruct struct {
-	Amount          int64  `json:"amount"`
+	Amount          int    `json:"amount"`
 	BeneAddress     string `json:"bene_address"`
 	BeneBankAcct    string `json:"bene_bank_acct"`
 	BeneEmail       string `json:"bene_email"`
@@ -77,6 +87,8 @@ type RedisPaymentOrderDataStruct struct {
 	Status          int    `json:"status"`
 	PlatformOrderId string `json:"platform_oder_id"`
 	RespMsg         string `json:"resp_msg"`
+	UTR             string `json:"utr"`
+	CallbackStatus  int    `json:"callback_status"`
 }
 
 // PayTmePaymentRespData 定义PayTme代付整体响应结构体
@@ -98,6 +110,22 @@ type PayTmePaymentData struct {
 	CreateTime      int64   `json:"create_time" bson:"create_time"`
 	UpdateTime      int64   `json:"update_time" bson:"update_time"`
 	Status          int     `json:"status" bson:"status"`
+	CallbackStatus  int     `json:"callback_status" bson:"callback_status"`
+}
+
+// PayTmePayInData 代收存入mongo的请求结构体
+type PayTmePayInData struct {
+	ID              string `json:"id" bson:"_id,omitempty"`
+	MchNumber       string `json:"mch_number" bson:"mch_number"`
+	MchOrderID      string `json:"mch_order_id" bson:"mch_order_id"`
+	Platform        string `json:"platform" bson:"platform"`
+	PlatformOrderId string `json:"platform_order_id" bson:"platform_order_id"`
+	Amount          int    `json:"amount" bson:"amount"`
+	Utr             string `json:"utr" bson:"utr"`
+	CreateTime      int64  `json:"create_time" bson:"create_time"`
+	UpdateTime      int64  `json:"update_time" bson:"update_time"`
+	Status          int    `json:"status" bson:"status"`
+	CallbackStatus  int    `json:"callback_status" bson:"callback_status"`
 }
 
 // PayTmePayInRequest 用于创建PayTme支付请求的结构体
