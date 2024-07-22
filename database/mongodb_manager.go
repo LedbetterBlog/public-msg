@@ -27,11 +27,11 @@ func NewMongoDBPoolManager(uri, dbName string) (*MongoDBPoolManager, error) {
 		log.Fatalf("测试 MongoDB 连接失败: %v", err)
 	}
 
-	// 成功连接并测试通过
-	log.Println("成功连接 MongoDB")
-
 	// 获取指定数据库
 	db := client.Database(dbName)
+
+	// 成功连接并测试通过
+	log.Println("MongoDB 连接成功")
 
 	return &MongoDBPoolManager{client: client, db: db}, nil
 }
