@@ -66,7 +66,7 @@ type RedisCollectOrderDataStruct struct {
 type PayTmeCollectRespData struct {
 	PlatformOrderId string `json:"platform_order_id"`
 	UPI             string `json:"upi_url"`
-	RspMsg          string `json:"rsp_msg"`
+	RespMsg         string `json:"resp_msg"`
 	Code            int    `json:"code"`
 }
 
@@ -94,7 +94,7 @@ type RedisPaymentOrderDataStruct struct {
 // PayTmePaymentRespData 定义PayTme代付整体响应结构体
 type PayTmePaymentRespData struct {
 	PlatformOrderId string `json:"platform_order_id"`
-	RspMsg          string `json:"rsp_msg"`
+	RespMsg         string `json:"resp_msg"`
 	Code            int    `json:"code"`
 }
 
@@ -102,7 +102,7 @@ type PayTmePaymentRespData struct {
 type PayTmePaymentData struct {
 	ID              string  `json:"id" bson:"_id,omitempty"`
 	MchNumber       string  `json:"mch_number" bson:"mch_number"`
-	MchOrderID      string  `json:"mch_order_id" bson:"mch_order_id"`
+	MchOrderID      string  `json:"merchant_order_id" bson:"merchant_order_id"`
 	Platform        string  `json:"platform" bson:"platform"`
 	PlatformOrderId string  `json:"platform_order_id" bson:"platform_order_id"`
 	Amount          float64 `json:"amount" bson:"amount"`
@@ -113,15 +113,16 @@ type PayTmePaymentData struct {
 	CallbackStatus  int     `json:"callback_status" bson:"callback_status"`
 }
 
-// PayTmePayInData 代收存入mongo的请求结构体
-type PayTmePayInData struct {
+// PayTmePayData 代收存入mongo的请求结构体
+type PayTmePayData struct {
 	ID              string `json:"id" bson:"_id,omitempty"`
 	MchNumber       string `json:"mch_number" bson:"mch_number"`
-	MchOrderID      string `json:"mch_order_id" bson:"mch_order_id"`
+	MchOrderID      string `json:"merchant_order_id" bson:"merchant_order_id"`
 	Platform        string `json:"platform" bson:"platform"`
 	PlatformOrderId string `json:"platform_order_id" bson:"platform_order_id"`
 	Amount          int    `json:"amount" bson:"amount"`
 	Utr             string `json:"utr" bson:"utr"`
+	RespMsg         string `json:"resp_msg" bson:"resp_msg"`
 	CreateTime      int64  `json:"create_time" bson:"create_time"`
 	UpdateTime      int64  `json:"update_time" bson:"update_time"`
 	Status          int    `json:"status" bson:"status"`

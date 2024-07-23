@@ -31,13 +31,13 @@ func (p *PayTme) PayIn(ctx context.Context, nowOrder allStruct.RedisCollectOrder
 	jsonData, err := json.Marshal(payload)
 	if err != nil {
 		log.Printf("Error marshalling JSON: %v", err)
-		return allStruct.PayTmeCollectRespData{RspMsg: err.Error(), Code: 400}, err
+		return allStruct.PayTmeCollectRespData{RespMsg: err.Error(), Code: 400}, err
 	}
 
 	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
 	if err != nil {
 		log.Printf("Error creating request: %v", err)
-		return allStruct.PayTmeCollectRespData{RspMsg: err.Error(), Code: 400}, err
+		return allStruct.PayTmeCollectRespData{RespMsg: err.Error(), Code: 400}, err
 	}
 
 	req.Header.Set("x-api-key", p.SecretKey)
@@ -50,35 +50,35 @@ func (p *PayTme) PayIn(ctx context.Context, nowOrder allStruct.RedisCollectOrder
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Printf("Error making request: %v", err)
-		return allStruct.PayTmeCollectRespData{RspMsg: err.Error(), Code: 400}, err
+		return allStruct.PayTmeCollectRespData{RespMsg: err.Error(), Code: 400}, err
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Printf("Error reading response body: %v", err)
-		return allStruct.PayTmeCollectRespData{RspMsg: err.Error(), Code: 400}, err
+		return allStruct.PayTmeCollectRespData{RespMsg: err.Error(), Code: 400}, err
 	}
 
 	var payInResponse allStruct.PayTmePayInRespData
 	err = json.Unmarshal(body, &payInResponse)
 	if err != nil {
 		log.Printf("Error unmarshalling JSON: %v", err)
-		return allStruct.PayTmeCollectRespData{RspMsg: err.Error(), Code: 400}, err
+		return allStruct.PayTmeCollectRespData{RespMsg: err.Error(), Code: 400}, err
 	}
 
 	if payInResponse.Code == 200 {
 		return allStruct.PayTmeCollectRespData{
 			PlatformOrderId: payInResponse.Data.PlatformOrderId,
 			UPI:             payInResponse.Data.UpiUrl,
-			RspMsg:          "create payment success",
+			RespMsg:         "create payment success",
 			Code:            payInResponse.Code,
 		}, nil
 	} else {
 		return allStruct.PayTmeCollectRespData{
 			PlatformOrderId: "",
 			UPI:             "",
-			RspMsg:          payInResponse.Message,
+			RespMsg:         payInResponse.Message,
 			Code:            payInResponse.Code,
 		}, nil
 	}
@@ -105,13 +105,13 @@ func (p *PayTme) PayOut(ctx context.Context, nowOrder allStruct.RedisPaymentOrde
 	jsonData, err := json.Marshal(payload)
 	if err != nil {
 		log.Printf("Error marshalling JSON: %v", err)
-		return allStruct.PayTmePaymentRespData{RspMsg: err.Error(), Code: 400}, err
+		return allStruct.PayTmePaymentRespData{RespMsg: err.Error(), Code: 400}, err
 	}
 
 	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
 	if err != nil {
 		log.Printf("Error creating request: %v", err)
-		return allStruct.PayTmePaymentRespData{RspMsg: err.Error(), Code: 400}, err
+		return allStruct.PayTmePaymentRespData{RespMsg: err.Error(), Code: 400}, err
 	}
 
 	req.Header.Set("x-api-key", p.SecretKey)
@@ -124,33 +124,33 @@ func (p *PayTme) PayOut(ctx context.Context, nowOrder allStruct.RedisPaymentOrde
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Printf("Error making request: %v", err)
-		return allStruct.PayTmePaymentRespData{RspMsg: err.Error(), Code: 400}, err
+		return allStruct.PayTmePaymentRespData{RespMsg: err.Error(), Code: 400}, err
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Printf("Error reading response body: %v", err)
-		return allStruct.PayTmePaymentRespData{RspMsg: err.Error(), Code: 400}, err
+		return allStruct.PayTmePaymentRespData{RespMsg: err.Error(), Code: 400}, err
 	}
 
 	var payoutResponse allStruct.PayTmePayOutResponse
 	err = json.Unmarshal(body, &payoutResponse)
 	if err != nil {
 		log.Printf("Error unmarshalling JSON: %v", err)
-		return allStruct.PayTmePaymentRespData{RspMsg: err.Error(), Code: 400}, err
+		return allStruct.PayTmePaymentRespData{RespMsg: err.Error(), Code: 400}, err
 	}
 
 	if payoutResponse.Code == 200 {
 		return allStruct.PayTmePaymentRespData{
 			PlatformOrderId: payoutResponse.Data.ID,
-			RspMsg:          "create payment success",
+			RespMsg:         "create payment success",
 			Code:            payoutResponse.Code,
 		}, nil
 	} else {
 		return allStruct.PayTmePaymentRespData{
 			PlatformOrderId: "",
-			RspMsg:          payoutResponse.Message,
+			RespMsg:         payoutResponse.Message,
 			Code:            payoutResponse.Code,
 		}, nil
 	}

@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
@@ -48,6 +49,32 @@ func (m *MongoDBPoolManager) InsertData(collectionName string, document interfac
 		return "", err
 	}
 	return id, nil
+}
+
+// FindOne 查询单个文档
+func (m *MongoDBPoolManager) FindOne(collectionName string, filter interface{}) (bson.M, error) {
+	collection := m.db.Collection(collectionName)
+	var result bson.M
+	err := collection.FindOne(context.TODO(), filter).Decode(&result)
+	if err != nil {
+		//log.Printf("mongo FindOne is error: %v", err)
+		return nil, err
+	}
+	return result, nil
+}
+
+// FindAll 查询多个文档
+func (m *MongoDBPoolManager) FindAll(collectionName string, filter interface{}) ([]bson.M, error) {
+	collection := m.db.Collection(collectionName)
+	cursor, err := collection.Find(context.TODO(), filter)
+	if err != nil {
+		return nil, err
+	}
+	var results []bson.M
+	if err = cursor.All(context.TODO(), &results); err != nil {
+		return nil, err
+	}
+	return results, nil
 }
 
 // Close 关闭 MongoDB 连接

@@ -33,6 +33,8 @@ type Config struct {
 		SuccessStatus int `json:"success_status"`
 		// 失败状态
 		FailStatus int `json:"fail_status"`
+		// 超时状态
+		TimeoutStatus int `json:"timeout_status"`
 		// 等待回调商户状态
 		WaitCallBackStatus int `json:"wait_callback_status"`
 		// 等待回调商户状态
