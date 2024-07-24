@@ -44,15 +44,27 @@ type ValidationResult struct {
 	Error string `json:"error"`
 }
 
+// MongoDbLocalStatusStruct 存入商户提交的订单数据，主要用来识别是否重复订单号
+type MongoDbLocalStatusStruct struct {
+	OrderID         string `json:"order_id" bson:"_id,omitempty"`
+	MerchantNumber  string `json:"merchant_number" bson:"mch_number"`
+	MerchantOrderID string `json:"merchant_order_id " bson:"merchant_order_id"`
+	CreateTime      int64  `json:"create_time" bson:"create_time"`
+	Amount          int    `json:"amount " bson:"amount"`
+	Platform        string `json:"platform" bson:"platform"`
+	Status          int    `json:"status" bson:"status"`
+	CallbackStatus  int    `json:"callback_status" bson:"callback_status"`
+}
+
 // RedisCollectOrderDataStruct redisOrderDataStruct结构体用于解析 JSON 数据
 type RedisCollectOrderDataStruct struct {
 	OrderID         string `json:"order_id"`
 	MerchantNumber  string `json:"merchant_number"`
 	CreateTime      int64  `json:"create_time"`
-	MerchantOrderID string `json:"merchant_order_id"`
-	Amount          int    `json:"amount"`
+	MerchantOrderID string `json:"merchant_order_id "`
+	Amount          int    `json:"amount "`
 	CustomerName    string `json:"customer_name"`
-	CustomerPhone   string `json:"customer_phone"`
+	CustomerPhone   string `json:"customer_phone" `
 	CustomerEmail   string `json:"customer_email"`
 	Platform        string `json:"platform"`
 	Status          int    `json:"status"`
@@ -96,6 +108,16 @@ type PayTmePaymentRespData struct {
 	PlatformOrderId string `json:"platform_order_id"`
 	RespMsg         string `json:"resp_msg"`
 	Code            int    `json:"code"`
+}
+
+// PayTmeOrderStatus 定义PayTme代收状态查询返回结构
+type PayTmeOrderStatus struct {
+	PlatformOrderId string `json:"platform_order_id"`
+	RespMsg         string `json:"resp_msg"`
+	Code            int    `json:"code"`
+	Utr             string `json:"utr"`
+	Amount          int    `json:"amount"`
+	Status          string `json:"status"`
 }
 
 // PayTmePaymentData 请求PayTme代付的请求结构体
@@ -169,6 +191,32 @@ type PayTmePayInRespData struct {
 	Data    struct {
 		UpiUrl          string `json:"upiurl"`
 		PlatformOrderId string `json:"transaction_id"`
+	} `json:"data"`
+}
+
+// PayTmePayInStatusResponse 用于解析PayTme代收订单状态响应的结构体
+type PayTmePayInStatusResponse struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Data    struct {
+		Status                string `json:"status"`
+		UserContactNumber     string `json:"userContactNumber"`
+		MerchantTransactionId string `json:"merchantTransactionId"`
+		Amount                int    `json:"amount"`
+		MerchantId            string `json:"merchantId"`
+		CreatedAt             string `json:"createdAt"`
+		Utr                   string `json:"rrn"`
+	} `json:"data"`
+}
+
+// PayTmePayOutStatusResponse 用于解析PayTme代付订单状态响应的结构体
+type PayTmePayOutStatusResponse struct {
+	Status string `json:"status"`
+	Data   struct {
+		Status     string `json:"status"`
+		Amount     int    `json:"amount"`
+		MerchantId string `json:"merchantId"`
+		Utr        string `json:"rrn"`
 	} `json:"data"`
 }
 

@@ -51,6 +51,29 @@ func (m *MongoDBPoolManager) InsertData(collectionName string, document interfac
 	return id, nil
 }
 
+// ReplaceOrUpdateData 更新或替换 MongoDB 中的数据
+func (m *MongoDBPoolManager) ReplaceOrUpdateData(collectionName string, filter interface{}, replacement interface{}) (string, error) {
+	collection := m.db.Collection(collectionName)
+	result, err := collection.ReplaceOne(context.TODO(), filter, replacement)
+	if err != nil {
+		return "", err
+	}
+	if result.MatchedCount == 0 {
+		return "No document matched the filter", nil
+	}
+	return "Document replaced successfully", nil
+}
+
+// UpdateData 部分更新 MongoDB 中的数据
+func (m *MongoDBPoolManager) UpdateData(collectionName string, filter interface{}, update interface{}) (int64, error) {
+	collection := m.db.Collection(collectionName)
+	updateResult, err := collection.UpdateOne(context.TODO(), filter, update)
+	if err != nil {
+		return 0, err
+	}
+	return updateResult.ModifiedCount, nil
+}
+
 // FindOne 查询单个文档
 func (m *MongoDBPoolManager) FindOne(collectionName string, filter interface{}) (bson.M, error) {
 	collection := m.db.Collection(collectionName)

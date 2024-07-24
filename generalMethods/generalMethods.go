@@ -14,7 +14,7 @@ import (
 )
 
 // ValidateOrder 验证通用订单数据(和是否重复商户订单)
-func ValidateOrder(MongoDBPoolManager *database.MongoDBPoolManager, order interface{}, requiredFields map[string]bool, collectionName string) (*allStruct.ValidationResult, error) {
+func ValidateOrder(MongoDBPoolManager *database.MongoDBPoolManager, order interface{}, requiredFields map[string]bool, mid string, collectionName string) (*allStruct.ValidationResult, error) {
 	var errors []string
 	v := reflect.ValueOf(order)
 
@@ -58,7 +58,7 @@ func ValidateOrder(MongoDBPoolManager *database.MongoDBPoolManager, order interf
 	merchantOrderIDField := v.FieldByName("MerchantOrderID")
 	if merchantOrderIDField.IsValid() {
 		merchantOrderID := merchantOrderIDField.String()
-		one, _ := MongoDBPoolManager.FindOne(collectionName, bson.M{"merchant_order_id": merchantOrderID})
+		one, _ := MongoDBPoolManager.FindOne(collectionName, bson.M{"merchant_order_id": merchantOrderID, "mch_number": mid})
 		if one != nil {
 			errors = append(errors, "merchant_order_id already exists")
 		}
@@ -72,7 +72,7 @@ func ValidateOrder(MongoDBPoolManager *database.MongoDBPoolManager, order interf
 
 // GetMidMsg 校验商户信息和签名
 func GetMidMsg(ctx context.Context, redisPoolManager *database.RedisPoolManager, mid, signature string, MerchantOrderID string, Amount int) (map[string]interface{}, error) {
-	// 获取商户信息
+	// 获取商户信息(通道配置什么都在这里)
 	value, err := redisPoolManager.GetValue(ctx, fmt.Sprintf("star-pay:core:mch:%s", mid))
 	if err != nil {
 		return nil, err

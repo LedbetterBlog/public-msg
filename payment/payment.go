@@ -13,22 +13,20 @@ import (
 )
 
 // SendThirdPayment 发送到对应的三方平台(目前只有paytme)--代付
-func SendThirdPayment(ctx context.Context, redisPoolManager *database.RedisPoolManager, orderData allStruct.RedisPaymentOrderDataStruct) {
+func SendThirdPayment(ctx context.Context, cfg *config.Config, redisPoolManager *database.RedisPoolManager, MongoDBPoolManager *database.MongoDBPoolManager, orderData allStruct.RedisPaymentOrderDataStruct) {
 	// 发送到对应的三方平台(目前只有paytme)
-	if orderData.Platform == "PAYTME" {
-		third.PayTmePayOut(ctx, redisPoolManager, orderData)
-	}
 	switch orderData.Platform {
 	case "PAYTME":
-		third.PayTmePayOut(ctx, redisPoolManager, orderData)
-		break
+		third.PayTmePayOut(ctx, cfg, redisPoolManager, MongoDBPoolManager, orderData)
 	}
 
 }
 
 // GetPaymentOrderID 生成代付订单 ID 并保存数据
-func GetPaymentOrderID(ctx context.Context, cfg *config.Config, redisPoolManager *database.RedisPoolManager, order allStruct.PaymentOrderStruct, mid string) (string, error) {
+func GetPaymentOrderID(ctx context.Context, cfg *config.Config, redisPoolManager *database.RedisPoolManager, MongoDBPoolManager *database.MongoDBPoolManager, order allStruct.PaymentOrderStruct, mid string) (string, error) {
 	LocalStatus := cfg.OrderStatus.LocalStatus
+	WaitCallBackStatus := cfg.OrderStatus.WaitCallBackStatus
+	CreateTime := time.Now().Unix()
 	var paymentData allStruct.RedisPaymentOrderDataStruct
 	orderID, err := redisPoolManager.GetUniqueID(ctx)
 	if err != nil {
@@ -36,7 +34,7 @@ func GetPaymentOrderID(ctx context.Context, cfg *config.Config, redisPoolManager
 	}
 	paymentData.OrderID = orderID
 	paymentData.MerchantNumber = mid
-	paymentData.CreateTime = time.Now().Unix()
+	paymentData.CreateTime = CreateTime
 	paymentData.Platform = "PAYTME"
 	paymentData.Status = LocalStatus
 	paymentData.Amount = order.Amount
@@ -57,6 +55,21 @@ func GetPaymentOrderID(ctx context.Context, cfg *config.Config, redisPoolManager
 	if err != nil {
 		return "", err
 	}
+	// 插入mongo(用来查是否重复订单)
+	var mongoDbLocalStatusStruct allStruct.MongoDbLocalStatusStruct
+	mongoDbLocalStatusStruct.OrderID = orderID
+	mongoDbLocalStatusStruct.MerchantOrderID = order.MerchantOrderID
+	mongoDbLocalStatusStruct.Status = LocalStatus
+	mongoDbLocalStatusStruct.Amount = order.Amount
+	mongoDbLocalStatusStruct.Platform = "PAYTME"
+	mongoDbLocalStatusStruct.CreateTime = CreateTime
+	mongoDbLocalStatusStruct.MerchantNumber = mid
+	mongoDbLocalStatusStruct.CallbackStatus = WaitCallBackStatus
+	_, err = MongoDBPoolManager.InsertData("payment_order_test", mongoDbLocalStatusStruct)
+	if err != nil {
+		log.Printf("MongoDBPoolManager insert paymentData is err: %v", err)
+		return "", err
+	}
 	// 当前代付订单的键
 	err = redisPoolManager.SetSAddValue(ctx, "star-pay:payment_id", orderID)
 	if err != nil {
@@ -64,6 +77,7 @@ func GetPaymentOrderID(ctx context.Context, cfg *config.Config, redisPoolManager
 	}
 
 	// 打印接收到的数据
-	log.Printf("Create order data: %+v", string(orderJSON))
+	log.Printf("Create payment order data: %+v", string(orderJSON))
+
 	return orderID, nil
 }
