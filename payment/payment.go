@@ -65,6 +65,7 @@ func GetPaymentOrderID(ctx context.Context, cfg *config.Config, redisPoolManager
 	mongoDbLocalStatusStruct.CreateTime = CreateTime
 	mongoDbLocalStatusStruct.MerchantNumber = mid
 	mongoDbLocalStatusStruct.CallbackStatus = WaitCallBackStatus
+	mongoDbLocalStatusStruct.OrderType = 1
 	_, err = MongoDBPoolManager.InsertData("payment_order_test", mongoDbLocalStatusStruct)
 	if err != nil {
 		log.Printf("MongoDBPoolManager insert paymentData is err: %v", err)

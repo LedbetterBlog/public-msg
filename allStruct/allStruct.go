@@ -54,6 +54,7 @@ type MongoDbLocalStatusStruct struct {
 	Platform        string `json:"platform" bson:"platform"`
 	Status          int    `json:"status" bson:"status"`
 	CallbackStatus  int    `json:"callback_status" bson:"callback_status"`
+	OrderType       int    `json:"order_type" bson:"order_type"`
 }
 
 // RedisCollectOrderDataStruct redisOrderDataStruct结构体用于解析 JSON 数据

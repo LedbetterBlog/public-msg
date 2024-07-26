@@ -47,7 +47,6 @@ func GetCollectOrderID(ctx context.Context, cfg *config.Config, redisPoolManager
 	collectData.CustomerEmail = order.CustomerEmail
 	collectData.CustomerPhone = order.CustomerPhone
 	collectData.MerchantOrderID = order.MerchantOrderID
-
 	orderJSON, err := json.Marshal(collectData)
 	if err != nil {
 		return collectData, err
@@ -67,6 +66,7 @@ func GetCollectOrderID(ctx context.Context, cfg *config.Config, redisPoolManager
 	mongoDbLocalStatusStruct.CreateTime = CreateTime
 	mongoDbLocalStatusStruct.MerchantNumber = mid
 	mongoDbLocalStatusStruct.CallbackStatus = WaitCallBackStatus
+	mongoDbLocalStatusStruct.OrderType = 0
 	_, err = MongoDBPoolManager.InsertData("payment_order_test", mongoDbLocalStatusStruct)
 	if err != nil {
 		log.Printf("MongoDBPoolManager insert collectData is err: %v", err)
