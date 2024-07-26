@@ -56,7 +56,12 @@ func (p *PayTme) PayIn(ctx context.Context, nowOrder allStruct.RedisCollectOrder
 		log.Printf("Error making request: %v", err)
 		return allStruct.PayTmeCollectRespData{RespMsg: err.Error(), Code: 400}, err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Printf("Error closing body: %v", err)
+		}
+	}(resp.Body)
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -130,7 +135,12 @@ func (p *PayTme) PayOut(ctx context.Context, nowOrder allStruct.RedisPaymentOrde
 		log.Printf("Error making request: %v", err)
 		return allStruct.PayTmePaymentRespData{RespMsg: err.Error(), Code: 400}, err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Printf("Error closing body: %v", err)
+		}
+	}(resp.Body)
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -184,7 +194,12 @@ func (p *PayTme) PayInStatus(ctx context.Context, nowOrder allStruct.RedisCollec
 		log.Printf("Error making request: %v", err)
 		return allStruct.PayTmeOrderStatus{RespMsg: err.Error(), Code: 400}, err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Printf("Error closing body: %v", err)
+		}
+	}(resp.Body)
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -257,7 +272,12 @@ func (p *PayTme) PayOutStatus(ctx context.Context, nowOrder allStruct.RedisPayme
 		log.Printf("Error making request: %v", err)
 		return allStruct.PayTmeOrderStatus{RespMsg: err.Error(), Code: 400}, err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Printf("Error closing body: %v", err)
+		}
+	}(resp.Body)
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -307,14 +327,16 @@ func (p *PayTme) PayOutStatus(ctx context.Context, nowOrder allStruct.RedisPayme
 func PayTmePayIn(ctx context.Context, cfg *config.Config, redisPoolManager *database.RedisPoolManager, MongoDBPoolManager *database.MongoDBPoolManager, collectOrderData allStruct.RedisCollectOrderDataStruct) allStruct.CreateCollectOrderResp {
 	var createOrderRsp allStruct.CreateCollectOrderResp
 	payTME := PayTme{SecretKey: "3a791d70e5e82c436d0dc495516e2229"}
+	createOrderRsp.MerchantOrderId = collectOrderData.MerchantOrderID
 	result, err := payTME.PayIn(ctx, collectOrderData)
 	if err != nil {
-		log.Printf("Error processing payout: %v", err)
+		//log.Printf("Error processing payIn: %v", err)
+		createOrderRsp.Code = result.Code
+		createOrderRsp.Message = fmt.Sprintf("Three party interface call error")
 		return createOrderRsp
 	}
 	// 创建订单返回信息给客户
 	createOrderRsp.PlatformOrderId = result.PlatformOrderId
-	createOrderRsp.MerchantOrderId = collectOrderData.MerchantOrderID
 	createOrderRsp.Code = result.Code
 	createOrderRsp.UpiLink = result.UPI
 	createOrderRsp.PaymentLink = "https://www.ez-pays.in/cashier/cashier-page?order_id=" + collectOrderData.OrderID
@@ -354,7 +376,7 @@ func PayTmePayIn(ctx context.Context, cfg *config.Config, redisPoolManager *data
 	if err != nil {
 		log.Printf("MongoDBPoolManager update collect status is err: %v", err)
 	}
-	log.Printf("Send collect orderID: %v-----Result: %+v", collectOrderData.OrderID, result)
+	log.Printf("Collect create order id: %v-----Result: %+v", collectOrderData.OrderID, result)
 	return createOrderRsp
 }
 
@@ -389,7 +411,7 @@ func PayTmePayOut(ctx context.Context, cfg *config.Config, redisPoolManager *dat
 	}
 
 	// 数据序列化更新mongodb的payment_order_test表
-	filter := bson.M{"_id": PaymentOrderData.OrderID} // 使用 email 作为过滤条件
+	filter := bson.M{"_id": PaymentOrderData.OrderID} // 使用 _id 作为过滤条件
 	update := bson.M{"$set": bson.M{"platform_order_id": result.PlatformOrderId, "status": PaymentOrderData.Status,
 		"resp_msg": result.RespMsg, "update_time": time.Now().Unix()}}
 	_, err = MongoDBPoolManager.UpdateData("payment_order_test", filter, update)
@@ -397,7 +419,7 @@ func PayTmePayOut(ctx context.Context, cfg *config.Config, redisPoolManager *dat
 		log.Printf("MongoDBPoolManager update PayTmePayOut orderJSON is err: %v", err)
 		return
 	}
-	log.Printf("Payment send order id: %v-----Result: %+v", PaymentOrderData.OrderID, result)
+	log.Printf("Payment create order id: %v-----Result: %+v", PaymentOrderData.OrderID, result)
 }
 
 // PayTmePayInStatus payTme的代收状态逻辑
@@ -408,7 +430,7 @@ func PayTmePayInStatus(ctx context.Context, collectOrderData allStruct.RedisColl
 		log.Printf("Error processing payout: %v", err)
 		return result
 	}
-	log.Printf("Send collect orderID: %v-----Result: %+v", collectOrderData.OrderID, result)
+	log.Printf("Send collect order Status: %v-----Result: %+v", collectOrderData.OrderID, result)
 	return result
 }
 
@@ -420,6 +442,6 @@ func PayTmePayOutStatus(ctx context.Context, collectOrderData allStruct.RedisPay
 		log.Printf("Error processing payout: %v", err)
 		return result
 	}
-	log.Printf("Send collect orderID: %v-----Result: %+v", collectOrderData.OrderID, result)
+	log.Printf("Send payment order status: %v-----Result: %+v", collectOrderData.OrderID, result)
 	return result
 }
