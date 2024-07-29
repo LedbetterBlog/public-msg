@@ -1,4 +1,4 @@
-package collect
+package payin
 
 import (
 	"context"
@@ -13,8 +13,8 @@ import (
 )
 
 // SendThirdCollect 发送到对应的三方平台(目前只有paytme)--代收
-func SendThirdCollect(ctx context.Context, cfg *config.Config, redisPoolManager *database.RedisPoolManager, MongoDBPoolManager *database.MongoDBPoolManager, collectOrderData allStruct.RedisCollectOrderDataStruct) allStruct.CreateCollectOrderResp {
-	var createOrderRsp allStruct.CreateCollectOrderResp
+func SendThirdCollect(ctx context.Context, cfg *config.Config, redisPoolManager *database.RedisPoolManager, MongoDBPoolManager *database.MongoDBPoolManager, collectOrderData allStruct.RedisPayInOrderDataStruct) allStruct.CreatePayInOrderResp {
+	var createOrderRsp allStruct.CreatePayInOrderResp
 	switch collectOrderData.Platform {
 	case "PAYTME":
 		createOrderRsp = third.PayTmePayIn(ctx, cfg, redisPoolManager, MongoDBPoolManager, collectOrderData)
@@ -27,11 +27,11 @@ func SendThirdCollect(ctx context.Context, cfg *config.Config, redisPoolManager 
 }
 
 // GetCollectOrderID 生成代收订单 ID 并保存数据
-func GetCollectOrderID(ctx context.Context, cfg *config.Config, redisPoolManager *database.RedisPoolManager, MongoDBPoolManager *database.MongoDBPoolManager, order allStruct.CollectOrderStruct, mid string) (allStruct.RedisCollectOrderDataStruct, error) {
+func GetCollectOrderID(ctx context.Context, cfg *config.Config, redisPoolManager *database.RedisPoolManager, MongoDBPoolManager *database.MongoDBPoolManager, order allStruct.PayInOrderStruct, mid string) (allStruct.RedisPayInOrderDataStruct, error) {
 	LocalStatus := cfg.OrderStatus.LocalStatus
 	WaitCallBackStatus := cfg.OrderStatus.WaitCallBackStatus
 	CreateTime := time.Now().Unix()
-	var collectData allStruct.RedisCollectOrderDataStruct
+	var collectData allStruct.RedisPayInOrderDataStruct
 	orderID, err := redisPoolManager.GetUniqueID(ctx)
 	if err != nil {
 		return collectData, err
@@ -41,22 +41,22 @@ func GetCollectOrderID(ctx context.Context, cfg *config.Config, redisPoolManager
 	collectData.Amount = order.Amount
 	collectData.OrderID = orderID
 	collectData.MerchantNumber = mid
+	collectData.MerchantOrderID = order.MerchantOrderID
 	collectData.CreateTime = CreateTime
 	collectData.Status = LocalStatus
-	collectData.CustomerName = order.CustomerName
-	collectData.CustomerEmail = order.CustomerEmail
-	collectData.CustomerPhone = order.CustomerPhone
-	collectData.MerchantOrderID = order.MerchantOrderID
+	collectData.UserName = order.CustomerName
+	collectData.UserEmail = order.CustomerEmail
+	collectData.UserPhone = order.CustomerPhone
 	orderJSON, err := json.Marshal(collectData)
 	if err != nil {
 		return collectData, err
 	}
 	// 代收订单数据
-	err = redisPoolManager.SetValue(ctx, fmt.Sprintf("star-pay:collect:%s", orderID), string(orderJSON))
+	err = redisPoolManager.SetValue(ctx, fmt.Sprintf("star-pay:payin:%s", orderID), string(orderJSON))
 	if err != nil {
 		return collectData, err
 	}
-	// 插入mongo(用来查是否重复订单)
+	// 插入mongo(用来查是否重复订单)初始化订单
 	var mongoDbLocalStatusStruct allStruct.MongoDbLocalStatusStruct
 	mongoDbLocalStatusStruct.OrderID = orderID
 	mongoDbLocalStatusStruct.MerchantOrderID = order.MerchantOrderID
@@ -67,18 +67,26 @@ func GetCollectOrderID(ctx context.Context, cfg *config.Config, redisPoolManager
 	mongoDbLocalStatusStruct.MerchantNumber = mid
 	mongoDbLocalStatusStruct.CallbackStatus = WaitCallBackStatus
 	mongoDbLocalStatusStruct.OrderType = 0
+	mongoDbLocalStatusStruct.UserName = order.CustomerName
+	mongoDbLocalStatusStruct.UserEmail = order.CustomerEmail
+	mongoDbLocalStatusStruct.UserPhone = order.CustomerPhone
+	mongoDbLocalStatusStruct.Chnl = 0
+	mongoDbLocalStatusStruct.ChnlFeeRatio = 0.0177
+	mongoDbLocalStatusStruct.MchFeeRatio = 0.06
+	RateAmount := float64(order.Amount) * mongoDbLocalStatusStruct.MchFeeRatio
+	mongoDbLocalStatusStruct.MchSettleAmount = float64(order.Amount) - RateAmount
 	_, err = MongoDBPoolManager.InsertData("payment_order_test", mongoDbLocalStatusStruct)
 	if err != nil {
 		log.Printf("MongoDBPoolManager insert collectData is err: %v", err)
 		return collectData, err
 	}
 	// 设置当前代收订单查询的键
-	err = redisPoolManager.SetSAddValue(ctx, "star-pay:collect_id", orderID)
+	err = redisPoolManager.SetSAddValue(ctx, "star-pay:payin_id", orderID)
 	if err != nil {
 		return collectData, err
 	}
 
 	// 打印接收到的数据
-	log.Printf("Create collect order data: %+v", string(orderJSON))
+	log.Printf("Create payin order data: %+v", string(orderJSON))
 	return collectData, nil
 }

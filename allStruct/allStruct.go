@@ -1,7 +1,7 @@
 package allStruct
 
-// CollectOrderStruct 结构体
-type CollectOrderStruct struct {
+// PayInOrderStruct 结构体
+type PayInOrderStruct struct {
 	MerchantOrderID string `json:"merchant_order_id"`
 	Amount          int    `json:"amount"`
 	CustomerName    string `json:"customer_name"`
@@ -9,8 +9,8 @@ type CollectOrderStruct struct {
 	CustomerEmail   string `json:"customer_email"`
 }
 
-// PaymentOrderStruct 结构体
-type PaymentOrderStruct struct {
+// PayOutOrderStruct 结构体
+type PayOutOrderStruct struct {
 	MerchantOrderID string `json:"merchant_order_id"`
 	BenePhone       string `json:"bene_phone"`
 	Amount          int    `json:"amount"`
@@ -21,8 +21,8 @@ type PaymentOrderStruct struct {
 	BeneBankAcct    string `json:"bene_bank_acct"`
 }
 
-// PayTmePaymentCallbackData 结构体
-type PayTmePaymentCallbackData struct {
+// PayTmePayOutCallbackData 结构体
+type PayTmePayOutCallbackData struct {
 	Status        string  `json:"status"`
 	TransactionId string  `json:"transaction_id"`
 	Amount        float64 `json:"amount"`
@@ -30,8 +30,8 @@ type PayTmePaymentCallbackData struct {
 	Utr           string  `json:"rrn"`
 }
 
-// PayTmeCollectCallbackData 结构体
-type PayTmeCollectCallbackData struct {
+// PayInCallbackData 结构体
+type PayInCallbackData struct {
 	Status        int     `json:"status"`
 	TransactionId string  `json:"transaction_id"`
 	Amount        float64 `json:"amount"`
@@ -46,66 +46,107 @@ type ValidationResult struct {
 
 // MongoDbLocalStatusStruct 存入商户提交的订单数据，主要用来识别是否重复订单号
 type MongoDbLocalStatusStruct struct {
-	OrderID         string `json:"order_id" bson:"_id,omitempty"`
-	MerchantNumber  string `json:"merchant_number" bson:"mch_number"`
-	MerchantOrderID string `json:"merchant_order_id " bson:"merchant_order_id"`
-	CreateTime      int64  `json:"create_time" bson:"create_time"`
-	Amount          int    `json:"amount " bson:"amount"`
-	Platform        string `json:"platform" bson:"platform"`
-	Status          int    `json:"status" bson:"status"`
-	CallbackStatus  int    `json:"callback_status" bson:"callback_status"`
-	OrderType       int    `json:"order_type" bson:"order_type"`
+	OrderID         string  `json:"order_id" bson:"_id,omitempty"`
+	MerchantNumber  string  `json:"merchant_number" bson:"mch_number"`
+	MerchantOrderID string  `json:"merchant_order_id " bson:"merchant_order_id"`
+	CreateTime      int64   `json:"create_time" bson:"create_time"`
+	Amount          int     `json:"amount " bson:"amount"`
+	UserName        string  `json:"user_name" bson:"user_name"`
+	UserPhone       string  `json:"user_phone" bson:"user_phone"`
+	UserEmail       string  `json:"user_email" bson:"user_email"`
+	Platform        string  `json:"platform" bson:"platform"`
+	BankIFSC        string  `json:"bank_ifsc" bson:"bank_ifsc"`
+	UserBankAcct    string  `json:"user_bank_acct" bson:"user_bank_acct"`
+	UserAddress     string  `json:"user_address" bson:"user_address"`
+	Chnl            int     `json:"chnl" bson:"chnl"`
+	ChnlFeeRatio    float64 `json:"chnl_fee_ratio" bson:"chnl_fee_ratio"`
+	MchFeeRatio     float64 `json:"mch_fee_ratio" bson:"mch_fee_ratio"`
+	Status          int     `json:"status" bson:"status"`
+	CallbackStatus  int     `json:"callback_status" bson:"callback_status"`
+	OrderType       int     `json:"order_type" bson:"order_type"`
+	MchSettleAmount float64 `json:"mch_settle_amount" bson:"mch_settle_amount"`
 }
 
-// RedisCollectOrderDataStruct redisOrderDataStruct结构体用于解析 JSON 数据
-type RedisCollectOrderDataStruct struct {
-	OrderID         string `json:"order_id"`
-	MerchantNumber  string `json:"merchant_number"`
-	CreateTime      int64  `json:"create_time"`
-	MerchantOrderID string `json:"merchant_order_id "`
-	Amount          int    `json:"amount "`
-	CustomerName    string `json:"customer_name"`
-	CustomerPhone   string `json:"customer_phone" `
-	CustomerEmail   string `json:"customer_email"`
-	Platform        string `json:"platform"`
-	Status          int    `json:"status"`
-	PlatformOrderId string `json:"platform_oder_id"`
-	RespMsg         string `json:"resp_msg"`
-	UTR             string `json:"utr"`
-	CallbackStatus  int    `json:"callback_status"`
+// RedisPayInOrderDataStruct redisOrderDataStruct结构体用于解析 JSON 数据
+type RedisPayInOrderDataStruct struct {
+	OrderID         string  `json:"order_id"`
+	MerchantNumber  string  `json:"merchant_number"`
+	CreateTime      int64   `json:"create_time"`
+	MerchantOrderID string  `json:"merchant_order_id "`
+	Amount          int     `json:"amount "`
+	UserName        string  `json:"user_name"`
+	UserPhone       string  `json:"user_phone" `
+	UserEmail       string  `json:"user_email"`
+	Platform        string  `json:"platform"`
+	Status          int     `json:"status"`
+	PlatformOrderId string  `json:"platform_oder_id"`
+	RespMsg         string  `json:"resp_msg"`
+	UTR             string  `json:"utr"`
+	CallbackStatus  int     `json:"callback_status"`
+	Chnl            int     `json:"chnl"`
+	ChnlFeeRatio    float64 `json:"chnl_fee_ratio"`
+	MchFeeRatio     float64 `json:"mch_fee_ratio"`
 }
 
-// PayTmeCollectRespData 定义PayTme代收整体响应结构体
-type PayTmeCollectRespData struct {
+//{
+//    "_id": ""订单号,
+//    "mch_number": ""商户名字,
+//    "merchant_order_id": ""商户订单Id,
+//    "create_time": NumberLong("")订单创建时间,
+//    "amount": NumberInt("")金额,
+//    "platform": ""平台,
+//    "status": NumberInt("")订单状态（0-支付成功，1-支付失败，2-支付超时（有回调一样会变成成功），5-本地创建订单成功，6-已经提交到三方）,
+//    "callback_status": NumberInt("")回调商户状态（0-未回调，1-回调）,
+//    "order_type": NumberInt("")订单类型（0-代收，1-代付）,
+//    "platform_order_id": ""三方平台订单id,
+//    "resp_msg": ""三方回复信息,
+//    "chnl":""通道,
+//    "chnl_fee_ratio":""通道费率,
+//    "user_name":""用户名称,
+//    "user_phone":""用户手机号,
+//    "user_email":""用户邮箱,
+//    "ifsc":""银行代号,
+//    "bank_acc":""银行账号,
+//    "payment_link":""系统支付链接,
+//    "upi_link":""UPI支付链接,
+//    "mch_fee_ratio":""商户费率,
+//    "update_time": NumberLong("")更新记录时间
+//}
+
+// PayTmePayInRespData 定义PayTme代收整体响应结构体
+type PayTmePayInRespData struct {
 	PlatformOrderId string `json:"platform_order_id"`
 	UPI             string `json:"upi_url"`
 	RespMsg         string `json:"resp_msg"`
 	Code            int    `json:"code"`
 }
 
-// RedisPaymentOrderDataStruct redisOrderDataStruct结构体用于解析 JSON 数据
-type RedisPaymentOrderDataStruct struct {
-	Amount          int    `json:"amount"`
-	BeneAddress     string `json:"bene_address"`
-	BeneBankAcct    string `json:"bene_bank_acct"`
-	BeneEmail       string `json:"bene_email"`
-	BeneIFSC        string `json:"bene_ifsc"`
-	BeneName        string `json:"bene_name"`
-	BenePhone       string `json:"bene_phone"`
-	CreateTime      int64  `json:"create_time"`
-	MerchantNumber  string `json:"merchant_number"`
-	MerchantOrderID string `json:"merchant_order_id"`
-	OrderID         string `json:"order_id"`
-	Platform        string `json:"platform"`
-	Status          int    `json:"status"`
-	PlatformOrderId string `json:"platform_oder_id"`
-	RespMsg         string `json:"resp_msg"`
-	UTR             string `json:"utr"`
-	CallbackStatus  int    `json:"callback_status"`
+// RedisPayOutOrderDataStruct redisOrderDataStruct结构体用于解析 JSON 数据
+type RedisPayOutOrderDataStruct struct {
+	Amount          int     `json:"amount"`
+	UserAddress     string  `json:"user_address"`
+	UserBankAcct    string  `json:"user_bank_acct"`
+	UserEmail       string  `json:"user_email"`
+	BankIFSC        string  `json:"bank_ifsc"`
+	UserName        string  `json:"user_name"`
+	UserPhone       string  `json:"user_phone"`
+	CreateTime      int64   `json:"create_time"`
+	MerchantNumber  string  `json:"merchant_number"`
+	MerchantOrderID string  `json:"merchant_order_id"`
+	OrderID         string  `json:"order_id"`
+	Platform        string  `json:"platform"`
+	Status          int     `json:"status"`
+	PlatformOrderId string  `json:"platform_oder_id"`
+	RespMsg         string  `json:"resp_msg"`
+	UTR             string  `json:"utr"`
+	CallbackStatus  int     `json:"callback_status"`
+	Chnl            int     `json:"chnl"`
+	ChnlFeeRatio    float64 `json:"chnl_fee_ratio"`
+	MchFeeRatio     float64 `json:"mch_fee_ratio"`
 }
 
-// PayTmePaymentRespData 定义PayTme代付整体响应结构体
-type PayTmePaymentRespData struct {
+// PayTmePayOutRespData 定义PayTme代付整体响应结构体
+type PayTmePayOutRespData struct {
 	PlatformOrderId string `json:"platform_order_id"`
 	RespMsg         string `json:"resp_msg"`
 	Code            int    `json:"code"`
@@ -119,21 +160,6 @@ type PayTmeOrderStatus struct {
 	Utr             string `json:"utr"`
 	Amount          int    `json:"amount"`
 	Status          string `json:"status"`
-}
-
-// PayTmePaymentData 请求PayTme代付的请求结构体
-type PayTmePaymentData struct {
-	ID              string  `json:"id" bson:"_id,omitempty"`
-	MchNumber       string  `json:"mch_number" bson:"mch_number"`
-	MchOrderID      string  `json:"merchant_order_id" bson:"merchant_order_id"`
-	Platform        string  `json:"platform" bson:"platform"`
-	PlatformOrderId string  `json:"platform_order_id" bson:"platform_order_id"`
-	Amount          float64 `json:"amount" bson:"amount"`
-	Utr             string  `json:"utr" bson:"utr"`
-	CreateTime      int64   `json:"create_time" bson:"create_time"`
-	UpdateTime      int64   `json:"update_time" bson:"update_time"`
-	Status          int     `json:"status" bson:"status"`
-	CallbackStatus  int     `json:"callback_status" bson:"callback_status"`
 }
 
 // PayTmePayData 代收存入mongo的请求结构体
@@ -161,8 +187,8 @@ type PayTmePayInRequest struct {
 	MerchantTransactionID string  `json:"merchantTransactionId"`
 }
 
-// PayTmePayoutRequest 用于创建PayTme支付请求的结构体
-type PayTmePayoutRequest struct {
+// PayTmePayOutRequest 用于创建PayTme支付请求的结构体
+type PayTmePayOutRequest struct {
 	Amount                float64 `json:"amount"`
 	Name                  string  `json:"name"`
 	Email                 string  `json:"email"`
@@ -181,12 +207,12 @@ type PayTmePayOutResponse struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
 	Data    struct {
-		ID string `json:"_id"`
+		ID string `json:"id"`
 	} `json:"data"`
 }
 
-// PayTmePayInRespData 定义PayTme代收响应结构体
-type PayTmePayInRespData struct {
+// PayTmePayInResponse 定义PayTme代收响应结构体
+type PayTmePayInResponse struct {
 	Message string `json:"message"`
 	Code    int    `json:"code"`
 	Data    struct {
@@ -221,12 +247,12 @@ type PayTmePayOutStatusResponse struct {
 	} `json:"data"`
 }
 
-// CreateCollectOrderResp 定义代收创建订单响应结构体
-type CreateCollectOrderResp struct {
+// CreatePayInOrderResp 定义代收创建订单响应结构体
+type CreatePayInOrderResp struct {
 	Code            int    `json:"code"`
 	Message         string `json:"message"`
 	MerchantOrderId string `json:"merchant_order_id"`
 	PlatformOrderId string `json:"platform_order_id"`
-	PaymentLink     string `json:"payment_link"`
+	PayOutLink      string `json:"payout_link"`
 	UpiLink         string `json:"upi_link"`
 }
