@@ -1,6 +1,7 @@
 package generalMethods
 
 import (
+	"bytes"
 	"context"
 	"crypto/md5"
 	"encoding/hex"
@@ -9,8 +10,12 @@ import (
 	"github.com/LedbetterBlog/public-msg/allStruct"
 	"github.com/LedbetterBlog/public-msg/database"
 	"go.mongodb.org/mongo-driver/bson"
+	"io"
+	"log"
+	"net/http"
 	"reflect"
 	"strings"
+	"time"
 )
 
 // ValidateOrder 验证通用订单数据(和是否重复商户订单)
@@ -58,7 +63,7 @@ func ValidateOrder(MongoDBPoolManager *database.MongoDBPoolManager, order interf
 	merchantOrderIDField := v.FieldByName("MerchantOrderID")
 	if merchantOrderIDField.IsValid() {
 		merchantOrderID := merchantOrderIDField.String()
-		one, _ := MongoDBPoolManager.FindOne(collectionName, bson.M{"merchant_order_id": merchantOrderID, "mch_number": mid})
+		one, _ := MongoDBPoolManager.FindOne(collectionName, bson.M{"merchant_order_id": merchantOrderID})
 		if one != nil {
 			errors = append(errors, "merchant_order_id already exists")
 		}
@@ -96,4 +101,52 @@ func GetMidMsg(ctx context.Context, redisPoolManager *database.RedisPoolManager,
 		}
 	}
 	return map[string]interface{}{"code": 403, "msg": "商户名或密钥错误"}, nil
+}
+
+// CallbackOrder 回调
+func CallbackOrder(ctx context.Context, callbackUrl string, data map[string]interface{}) {
+	// 将数据编码为 JSON
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		log.Println("Error encoding data:", err)
+		return
+	}
+
+	// 打印请求的地址和数据
+	log.Println("Request mch callback url:", callbackUrl)
+	log.Println("Request mch callback url:", string(jsonData))
+
+	// 创建一个新的 POST 请求
+	req, err := http.NewRequestWithContext(ctx, "POST", callbackUrl, bytes.NewBuffer(jsonData))
+	if err != nil {
+		log.Println("Error creating request:", err)
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	// 使用 http.Client 发送请求
+	client := &http.Client{
+		Timeout: 10 * time.Second, // 设置超时时间为10秒
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Println("Error sending request:", err)
+		return
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Println("Error closing callback url body:", err)
+		}
+	}(resp.Body)
+
+	// 读取响应体
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Println("Error reading response:", err)
+		return
+	}
+
+	// 打印响应体内容（可选）
+	log.Println("Response body:", string(body))
 }

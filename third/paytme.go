@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/LedbetterBlog/public-msg/allStruct"
 	"github.com/LedbetterBlog/public-msg/config"
@@ -252,6 +253,9 @@ func (p *PayTme) PayInStatus(ctx context.Context, nowOrder allStruct.RedisPayInO
 func (p *PayTme) PayOutStatus(ctx context.Context, nowOrder allStruct.RedisPayOutOrderDataStruct) (allStruct.PayTmeOrderStatus, error) {
 	baseURL := "https://apis.paytme.com/v1/payout/status/"
 	transactionId := nowOrder.PlatformOrderId // 例如，你的 transactionId
+	if transactionId == "" {
+		return allStruct.PayTmeOrderStatus{RespMsg: fmt.Sprintf("%s no transaction id", nowOrder.OrderID), Code: 400}, errors.New(fmt.Sprintf("%s no transaction id", nowOrder.OrderID))
+	}
 	// 构造完整的 URL
 	fullURL := fmt.Sprintf("%s%s", baseURL, transactionId)
 	req, err := http.NewRequestWithContext(ctx, "GET", fullURL, nil)
@@ -285,38 +289,38 @@ func (p *PayTme) PayOutStatus(ctx context.Context, nowOrder allStruct.RedisPayOu
 		return allStruct.PayTmeOrderStatus{RespMsg: err.Error(), Code: 400}, err
 	}
 
-	var payTmePayInStatusResponse allStruct.PayTmePayOutStatusResponse
-	err = json.Unmarshal(body, &payTmePayInStatusResponse)
+	var payTmePayOutStatusResponse allStruct.PayTmePayOutStatusResponse
+	err = json.Unmarshal(body, &payTmePayOutStatusResponse)
 	if err != nil {
-		log.Printf("Error unmarshalling JSON: %v", err)
+		log.Printf("Error unmarshalling JSON: %v, %s", err, body)
 		return allStruct.PayTmeOrderStatus{RespMsg: err.Error(), Code: 400}, err
 	}
 
-	if payTmePayInStatusResponse.Status == "200" {
-		switch payTmePayInStatusResponse.Data.Status {
+	if payTmePayOutStatusResponse.Status == "200" {
+		switch payTmePayOutStatusResponse.Data.Status {
 		case "success":
 			return allStruct.PayTmeOrderStatus{
-				PlatformOrderId: payTmePayInStatusResponse.Data.MerchantId,
+				PlatformOrderId: payTmePayOutStatusResponse.Data.MerchantId,
 				RespMsg:         "payout order status is success",
-				Utr:             payTmePayInStatusResponse.Data.Utr,
-				Amount:          payTmePayInStatusResponse.Data.Amount,
-				Status:          payTmePayInStatusResponse.Data.Status,
+				Utr:             payTmePayOutStatusResponse.Data.Utr,
+				Amount:          payTmePayOutStatusResponse.Data.Amount,
+				Status:          payTmePayOutStatusResponse.Data.Status,
 			}, nil
 		case "failed":
 			return allStruct.PayTmeOrderStatus{
-				PlatformOrderId: payTmePayInStatusResponse.Data.MerchantId,
+				PlatformOrderId: payTmePayOutStatusResponse.Data.MerchantId,
 				RespMsg:         "payout order status is fail",
-				Utr:             payTmePayInStatusResponse.Data.Utr,
-				Amount:          payTmePayInStatusResponse.Data.Amount,
-				Status:          payTmePayInStatusResponse.Data.Status,
+				Utr:             payTmePayOutStatusResponse.Data.Utr,
+				Amount:          payTmePayOutStatusResponse.Data.Amount,
+				Status:          payTmePayOutStatusResponse.Data.Status,
 			}, nil
 		default:
 			return allStruct.PayTmeOrderStatus{
-				PlatformOrderId: payTmePayInStatusResponse.Data.MerchantId,
+				PlatformOrderId: payTmePayOutStatusResponse.Data.MerchantId,
 				RespMsg:         "payout order status is not found",
-				Utr:             payTmePayInStatusResponse.Data.Utr,
-				Amount:          payTmePayInStatusResponse.Data.Amount,
-				Status:          payTmePayInStatusResponse.Data.Status,
+				Utr:             payTmePayOutStatusResponse.Data.Utr,
+				Amount:          payTmePayOutStatusResponse.Data.Amount,
+				Status:          payTmePayOutStatusResponse.Data.Status,
 			}, nil
 		}
 	}
@@ -395,8 +399,12 @@ func PayTmePayOut(ctx context.Context, cfg *config.Config, redisPoolManager *dat
 	// 如果有三方订单号，redis更新三方平台订单号和三方订单号
 	starMember := "star-pay:payout:" + PayoutOrderData.OrderID
 	// 更新了redis里的代付订单状态，和三方订单号
-	PayoutOrderData.Status = cfg.OrderStatus.CommitStatus
 	PayoutOrderData.PlatformOrderId = result.PlatformOrderId
+	if PayoutOrderData.PlatformOrderId != "" {
+		PayoutOrderData.Status = cfg.OrderStatus.CommitStatus
+	} else {
+		PayoutOrderData.Status = cfg.OrderStatus.FailStatus
+	}
 	PayoutOrderData.RespMsg = result.RespMsg
 	orderJSON, err := json.Marshal(PayoutOrderData)
 	if err != nil {
