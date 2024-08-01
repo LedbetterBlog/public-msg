@@ -19,7 +19,7 @@ import (
 )
 
 // ValidateOrder 验证通用订单数据(和是否重复商户订单)
-func ValidateOrder(MongoDBPoolManager *database.MongoDBPoolManager, order interface{}, requiredFields map[string]bool, mid string, collectionName string) (*allStruct.ValidationResult, error) {
+func ValidateOrder(MongoDBPoolManager *database.MongoDBPoolManager, order interface{}, requiredFields map[string]bool, collectionName string) (*allStruct.ValidationResult, error) {
 	var errors []string
 	v := reflect.ValueOf(order)
 
