@@ -39,6 +39,7 @@ func NewRedisPoolManager(addr, password string, db int) (*RedisPoolManager, erro
 func (r *RedisPoolManager) GetUniqueID(ctx context.Context) (string, error) {
 	id, err := r.client.Incr(ctx, "my_counter").Result()
 	if err != nil {
+		log.Printf("GetUniqueID error: %v", err) // 使用 %v 记录错误信息
 		return "", err
 	}
 	return strconv.FormatInt(id, 10), nil
@@ -48,6 +49,7 @@ func (r *RedisPoolManager) GetUniqueID(ctx context.Context) (string, error) {
 func (r *RedisPoolManager) GetValue(ctx context.Context, key string) (string, error) {
 	value, err := r.client.Get(ctx, key).Result()
 	if err != nil {
+		log.Printf("GetValue error: %v", err) // 使用 %v 记录错误信息
 		return "", err
 	}
 	return value, nil
@@ -70,6 +72,7 @@ func (r *RedisPoolManager) GetSMEMBERSValue(ctx context.Context, key string) ([]
 	// 使用 SMEMBERS 方法获取集合的所有成员
 	members, err := r.client.SMembers(ctx, key).Result()
 	if err != nil {
+		log.Printf("GetSMEMBERSValue error: %v", err) // 使用 %v 记录错误信息
 		return nil, err
 	}
 	return members, nil
@@ -80,6 +83,7 @@ func (r *RedisPoolManager) RemoveFromSet(ctx context.Context, key string, values
 	// 使用 SREM 方法从集合中删除指定的值
 	_, err := r.client.SRem(ctx, key, values).Result()
 	if err != nil {
+		log.Printf("RemoveFromSet error: %v", err) // 使用 %v 记录错误信息
 		return fmt.Errorf("error removing values from set: %w", err)
 	}
 	return nil
@@ -90,6 +94,7 @@ func (r *RedisPoolManager) DeleteValues(ctx context.Context, keys ...string) err
 	// 使用 DEL 方法删除指定的多个键
 	_, err := r.client.Del(ctx, keys...).Result()
 	if err != nil {
+		log.Printf("DeleteValues error: %v", err) // 使用 %v 记录错误信息
 		return fmt.Errorf("error deleting keys from redis: %w", err)
 	}
 	return nil

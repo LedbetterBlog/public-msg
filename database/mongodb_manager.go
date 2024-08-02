@@ -50,6 +50,7 @@ func (m *MongoDBPoolManager) InsertData(ctx context.Context, collectionName stri
 	collection := m.db.Collection(collectionName)
 	result, err := collection.InsertOne(ctx, document)
 	if err != nil {
+		log.Printf("InsertData error: %v", err) // 使用 %v 记录错误信息
 		return "", err
 	}
 	id, ok := result.InsertedID.(string)
@@ -64,6 +65,7 @@ func (m *MongoDBPoolManager) ReplaceOrUpdateData(ctx context.Context, collection
 	collection := m.db.Collection(collectionName)
 	result, err := collection.ReplaceOne(ctx, filter, replacement)
 	if err != nil {
+
 		return "", err
 	}
 	if result.MatchedCount == 0 {
@@ -77,6 +79,7 @@ func (m *MongoDBPoolManager) UpdateData(ctx context.Context, collectionName stri
 	collection := m.db.Collection(collectionName)
 	updateResult, err := collection.UpdateOne(ctx, filter, update)
 	if err != nil {
+		log.Printf("UpdateData error: %v", err) // 使用 %v 记录错误信息
 		return 0, err
 	}
 	return updateResult.ModifiedCount, nil
