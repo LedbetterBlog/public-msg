@@ -76,7 +76,7 @@ func GetPayoutOrderID(ctx context.Context, cfg *config.Config, redisPoolManager 
 	mongoDbLocalStatusStruct.MchFeeRatio = 0.022
 	RateAmount := float64(order.Amount) * mongoDbLocalStatusStruct.MchFeeRatio
 	mongoDbLocalStatusStruct.MchSettleAmount = float64(order.Amount) + RateAmount
-	_, err = MongoDBPoolManager.InsertData("payment_order_test", mongoDbLocalStatusStruct)
+	_, err = MongoDBPoolManager.InsertData(ctx, "payment_order_test", mongoDbLocalStatusStruct)
 	if err != nil {
 		log.Printf("MongoDBPoolManager insert paymentData is err: %v", err)
 		return "", err

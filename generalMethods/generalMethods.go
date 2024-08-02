@@ -19,7 +19,7 @@ import (
 )
 
 // ValidateOrder 验证通用订单数据(和是否重复商户订单)
-func ValidateOrder(MongoDBPoolManager *database.MongoDBPoolManager, order interface{}, requiredFields map[string]bool, collectionName string) (*allStruct.ValidationResult, error) {
+func ValidateOrder(ctx context.Context, MongoDBPoolManager *database.MongoDBPoolManager, order interface{}, requiredFields map[string]bool, collectionName string) (*allStruct.ValidationResult, error) {
 	var errors []string
 	v := reflect.ValueOf(order)
 
@@ -63,7 +63,10 @@ func ValidateOrder(MongoDBPoolManager *database.MongoDBPoolManager, order interf
 	merchantOrderIDField := v.FieldByName("MerchantOrderID")
 	if merchantOrderIDField.IsValid() {
 		merchantOrderID := merchantOrderIDField.String()
-		one, _ := MongoDBPoolManager.FindOne(collectionName, bson.M{"merchant_order_id": merchantOrderID})
+		one, err := MongoDBPoolManager.FindOne(ctx, collectionName, bson.M{"merchant_order_id": merchantOrderID})
+		if err != nil {
+			return nil, fmt.Errorf(": %w", err)
+		}
 		if one != nil {
 			errors = append(errors, "merchant_order_id already exists")
 		}

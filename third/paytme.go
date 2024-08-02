@@ -380,7 +380,7 @@ func PayTmePayIn(ctx context.Context, cfg *config.Config, redisPoolManager *data
 		"status":      cfg.OrderStatus.CommitStatus,
 		"upi_link":    createOrderRsp.UpiLink,
 	}}
-	_, err = MongoDBPoolManager.UpdateData("payment_order_test", filter, update)
+	_, err = MongoDBPoolManager.UpdateData(ctx, "payment_order_test", filter, update)
 	if err != nil {
 		log.Printf("MongoDBPoolManager update payin status is err: %v", err)
 	}
@@ -426,7 +426,7 @@ func PayTmePayOut(ctx context.Context, cfg *config.Config, redisPoolManager *dat
 	filter := bson.M{"_id": PayoutOrderData.OrderID} // 使用 _id 作为过滤条件
 	update := bson.M{"$set": bson.M{"platform_order_id": result.PlatformOrderId, "status": PayoutOrderData.Status,
 		"resp_msg": result.RespMsg, "update_time": time.Now().Unix()}}
-	_, err = MongoDBPoolManager.UpdateData("payment_order_test", filter, update)
+	_, err = MongoDBPoolManager.UpdateData(ctx, "payment_order_test", filter, update)
 	if err != nil {
 		log.Printf("MongoDBPoolManager update PayTmePayOut orderJSON is err: %v", err)
 		return

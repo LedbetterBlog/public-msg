@@ -6,6 +6,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"log"
 	"strconv"
+	"time"
 )
 
 // RedisPoolManager 结构体
@@ -16,9 +17,12 @@ type RedisPoolManager struct {
 // NewRedisPoolManager 创建 RedisPoolManager 实例
 func NewRedisPoolManager(addr, password string, db int) (*RedisPoolManager, error) {
 	client := redis.NewClient(&redis.Options{
-		Addr:     addr,
-		Password: password,
-		DB:       db, // 使用配置文件中的数据库编号
+		Addr:         addr,
+		Password:     password,
+		DB:           db,              // 使用配置文件中的数据库编号
+		DialTimeout:  5 * time.Second, // 连接超时时间
+		ReadTimeout:  3 * time.Second, // 读超时时间
+		WriteTimeout: 3 * time.Second, // 写超时时间
 	})
 
 	// 测试连接
