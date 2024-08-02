@@ -341,7 +341,7 @@ func PayTmePayIn(ctx context.Context, cfg *config.Config, redisPoolManager *data
 		createOrderRsp.Message = result.RespMsg
 		collectOrderData.Status = cfg.OrderStatus.CommitStatus
 	}
-	// 创建订单返回信息给客户
+	// 创建订单返回信息给客户(createOrderRsp给客户)
 	createOrderRsp.PlatformOrderId = result.PlatformOrderId
 	createOrderRsp.Code = result.Code
 	createOrderRsp.UpiLink = result.UPI
@@ -375,7 +375,7 @@ func PayTmePayIn(ctx context.Context, cfg *config.Config, redisPoolManager *data
 	// 数据序列化更新mongodb的payment_order_test表
 	filter := bson.M{"_id": collectOrderData.OrderID} // 使用 id 作为过滤条件
 	update := bson.M{"$set": bson.M{"platform_order_id": result.PlatformOrderId,
-		"resp_msg":    collectOrderData.RespMsg,
+		"resp_msg":    createOrderRsp.Message,
 		"update_time": time.Now().Unix(),
 		"status":      collectOrderData.Status,
 		"upi_link":    createOrderRsp.UpiLink,

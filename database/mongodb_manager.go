@@ -93,7 +93,7 @@ func (m *MongoDBPoolManager) FindOne(ctx context.Context, collectionName string,
 	if err != nil {
 		// 查找的文档不存在要这么处理报错（本来就是查询是否存在的）
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			//log.Printf("No document found for filter: %v", filter)
+			// 查不到就可以插入
 			return nil, nil
 		}
 		log.Printf("mongo FindOne error: %v", err)

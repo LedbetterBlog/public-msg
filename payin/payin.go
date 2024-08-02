@@ -33,6 +33,7 @@ func GetCollectOrderID(ctx context.Context, cfg *config.Config, redisPoolManager
 	CreateTime := time.Now().Unix()
 	var collectData allStruct.RedisPayInOrderDataStruct
 	orderID, err := redisPoolManager.GetUniqueID(ctx)
+
 	if err != nil {
 		return collectData, err
 	}
