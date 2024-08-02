@@ -334,21 +334,21 @@ func PayTmePayIn(ctx context.Context, cfg *config.Config, redisPoolManager *data
 	createOrderRsp.MerchantOrderId = collectOrderData.MerchantOrderID
 	result, err := payTME.PayIn(ctx, collectOrderData)
 	if err != nil {
-		//log.Printf("Error processing payIn: %v", err)
-		createOrderRsp.Code = result.Code
+		log.Printf("Three party interface call error: %v", err)
 		createOrderRsp.Message = fmt.Sprintf("Three party interface call error")
-		return createOrderRsp
+		collectOrderData.Status = cfg.OrderStatus.FailStatus
+	} else {
+		createOrderRsp.Message = result.RespMsg
+		collectOrderData.Status = cfg.OrderStatus.CommitStatus
 	}
 	// 创建订单返回信息给客户
 	createOrderRsp.PlatformOrderId = result.PlatformOrderId
 	createOrderRsp.Code = result.Code
 	createOrderRsp.UpiLink = result.UPI
 	createOrderRsp.PayOutLink = "https://www.ez-pays.in/cashier/cashier-page?order_id=" + collectOrderData.OrderID
-	createOrderRsp.Message = result.RespMsg
 	// 如果有三方订单号，redis更新三方平台订单号和三方订单号
 	starMember := "star-pay:payin:" + collectOrderData.OrderID
 	// 更新了redis里的代收订单状态，和三方订单号
-	collectOrderData.Status = cfg.OrderStatus.CommitStatus
 	collectOrderData.PlatformOrderId = result.PlatformOrderId
 	collectOrderData.RespMsg = result.RespMsg
 
@@ -373,11 +373,11 @@ func PayTmePayIn(ctx context.Context, cfg *config.Config, redisPoolManager *data
 		return createOrderRsp
 	}
 	// 数据序列化更新mongodb的payment_order_test表
-	filter := bson.M{"_id": collectOrderData.OrderID} // 使用 email 作为过滤条件
+	filter := bson.M{"_id": collectOrderData.OrderID} // 使用 id 作为过滤条件
 	update := bson.M{"$set": bson.M{"platform_order_id": result.PlatformOrderId,
-		"resp_msg":    result.RespMsg,
+		"resp_msg":    collectOrderData.RespMsg,
 		"update_time": time.Now().Unix(),
-		"status":      cfg.OrderStatus.CommitStatus,
+		"status":      collectOrderData.Status,
 		"upi_link":    createOrderRsp.UpiLink,
 	}}
 	_, err = MongoDBPoolManager.UpdateData(ctx, "payment_order_test", filter, update)
@@ -394,13 +394,12 @@ func PayTmePayOut(ctx context.Context, cfg *config.Config, redisPoolManager *dat
 	result, err := payTME.PayOut(ctx, PayoutOrderData)
 	if err != nil {
 		log.Printf("Error processing payout: %v", err)
-		return
 	}
 	// 如果有三方订单号，redis更新三方平台订单号和三方订单号
 	starMember := "star-pay:payout:" + PayoutOrderData.OrderID
 	// 更新了redis里的代付订单状态，和三方订单号
-	PayoutOrderData.PlatformOrderId = result.PlatformOrderId
-	if PayoutOrderData.PlatformOrderId != "" {
+	if result.PlatformOrderId != "" {
+		PayoutOrderData.PlatformOrderId = result.PlatformOrderId
 		PayoutOrderData.Status = cfg.OrderStatus.CommitStatus
 	} else {
 		PayoutOrderData.Status = cfg.OrderStatus.FailStatus
