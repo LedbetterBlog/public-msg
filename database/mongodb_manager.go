@@ -3,7 +3,6 @@ package database
 import (
 	"context"
 	"errors"
-	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -88,32 +87,14 @@ func (m *MongoDBPoolManager) FindOne(ctx context.Context, collectionName string,
 	collection := m.db.Collection(collectionName)
 	var result bson.M
 
-	fmt.Printf("Query filter: %v\n", filter)
+	//fmt.Printf("Query filter: %v\n", filter)
 
 	err := collection.FindOne(ctx, filter).Decode(&result)
 	if err != nil {
-		// 查找的文档不存在要这么处理报错
+		// 查找的文档不存在要这么处理报错（本来就是查询是否存在的）
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			log.Printf("No document found for filter: %v", filter)
-			// Debug: print all documents in the collection
-			cursor, err := collection.Find(ctx, bson.M{})
-			if err != nil {
-				log.Printf("Error finding all documents: %v", err)
-				return nil, err
-			}
-			defer func(cursor *mongo.Cursor, ctx context.Context) {
-				err := cursor.Close(ctx)
-				if err != nil {
-
-				}
-			}(cursor, ctx)
-			var docs []bson.M
-			if err = cursor.All(ctx, &docs); err != nil {
-				log.Printf("Error decoding all documents: %v", err)
-				return nil, err
-			}
-			log.Printf("Documents in collection: %v", docs)
-			return nil, err
+			//log.Printf("No document found for filter: %v", filter)
+			return nil, nil
 		}
 		log.Printf("mongo FindOne error: %v", err)
 		return nil, err
