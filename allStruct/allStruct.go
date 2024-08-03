@@ -178,6 +178,12 @@ type PayTmePayData struct {
 	CallbackStatus  int    `json:"callback_status" bson:"callback_status"`
 }
 
+// ProcessOrderStatusData 状态返回结构体
+type ProcessOrderStatusData struct {
+	Utr    string `json:"utr"`
+	Status int    `json:"status"`
+}
+
 // PayTmePayInRequest 用于创建PayTme支付请求的结构体
 type PayTmePayInRequest struct {
 	Amount                float64 `json:"amount"`

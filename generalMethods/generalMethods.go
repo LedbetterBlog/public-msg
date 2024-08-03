@@ -117,7 +117,7 @@ func CallbackOrder(ctx context.Context, callbackUrl string, data map[string]inte
 
 	// 打印请求的地址和数据
 	log.Println("Request mch callback url:", callbackUrl)
-	log.Println("Request mch callback url:", string(jsonData))
+	log.Println("Request mch callback data:", string(jsonData))
 
 	// 创建一个新的 POST 请求
 	req, err := http.NewRequestWithContext(ctx, "POST", callbackUrl, bytes.NewBuffer(jsonData))
