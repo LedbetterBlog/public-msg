@@ -14,6 +14,7 @@ import (
 	"log"
 	"net/http"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -152,4 +153,38 @@ func CallbackOrder(ctx context.Context, callbackUrl string, data map[string]inte
 
 	// 打印响应体内容（可选）
 	log.Println("Response body:", string(body))
+}
+
+// ProcessJSON 处理 JSON 数据的方法
+func ProcessJSON(body []byte) (map[string]interface{}, []byte, error) {
+	var temp map[string]interface{}
+	if err := json.Unmarshal(body, &temp); err != nil {
+		return nil, nil, err
+	}
+
+	// 处理 amount 字段
+	if amountRaw, ok := temp["amount"]; ok {
+		switch v := amountRaw.(type) {
+		case float64:
+			temp["amount"] = v
+		case string:
+			var err error
+			temp["amount"], err = strconv.ParseFloat(v, 64)
+			if err != nil {
+				return nil, nil, err
+			}
+		default:
+			return nil, nil, json.Unmarshal([]byte(`{"error": "Unexpected amount type"}`), &temp)
+		}
+	} else {
+		return nil, nil, json.Unmarshal([]byte(`{"error": "Missing amount field"}`), &temp)
+	}
+
+	// 将处理后的数据转换为 JSON 字符串
+	orderJSON, err := json.Marshal(temp)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return temp, orderJSON, nil
 }
